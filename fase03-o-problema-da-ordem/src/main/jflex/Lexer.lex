@@ -3,74 +3,73 @@ package br.maua.cic303;
 import java_cup.runtime.Symbol;
 
 %%
-
 %class Lexer
 %public
 %unicode
 %cup
-%implements java_cup.runtime.Scanner
 %line
 %column
 
 %{
     private Symbol symbol(int type) {
-        return new Symbol(type, yyline + 1, yycolumn + 1);
+        return new Symbol(type, yyline, yycolumn);
     }
 
     private Symbol symbol(int type, Object value) {
-        return new Symbol(type, yyline + 1, yycolumn + 1, value);
+        return new Symbol(type, yyline, yycolumn, value);
     }
 %}
 
-WhiteSpace = [ \t\r\n]+
-Letter = [a-zA-Z]
-Digit  = [0-9]
+/* ========================================================================= */
+/* MACROS */
+/* ========================================================================= */
+LineTerminator = \r|\n|\r\n
+WhiteSpace = {LineTerminator}|[ \t\f]
 
 Number = [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
-Identifier = {Letter}({Letter}|{Digit}|_){0,31}
+Letter = [a-zA-Z]
+Digit = [0-9]
+
+Identifier = {Letter}({Letter}|{Digit}|_)*
 OversizedIdentifier = {Letter}({Letter}|{Digit}|_){32,}
 
 %%
-
 <YYINITIAL> {
+    {WhiteSpace} { /* ignora */ }
 
-    {WhiteSpace} { }
-
+    /* Palavras reservadas */
     "if"    { return symbol(sym.IF); }
     "then"  { return symbol(sym.THEN); }
     "else"  { return symbol(sym.ELSE); }
     "while" { return symbol(sym.WHILE); }
 
+    /* Operadores relacionais e atribuição */
+    "==" | "!=" | "<=" | ">=" | "<" | ">" { return symbol(sym.REL_OP, yytext()); }
+    "=" { return symbol(sym.ASSIGN); }
+
+    /* Pontuação */
     "(" { return symbol(sym.LPAREN); }
     ")" { return symbol(sym.RPAREN); }
     "{" { return symbol(sym.LBRACE); }
     "}" { return symbol(sym.RBRACE); }
     ";" { return symbol(sym.SEMI); }
 
-    "==" { return symbol(sym.REL_OP, yytext()); }
-    "!=" { return symbol(sym.REL_OP, yytext()); }
-    "<=" { return symbol(sym.REL_OP, yytext()); }
-    ">=" { return symbol(sym.REL_OP, yytext()); }
-    "<"  { return symbol(sym.REL_OP, yytext()); }
-    ">"  { return symbol(sym.REL_OP, yytext()); }
-
-    "=" { return symbol(sym.ASSIGN); }
-
+    /* Operadores matemáticos */
     "+" | "-" { return symbol(sym.ADD_OP, yytext()); }
     "*" | "/" | "%" { return symbol(sym.MUL_OP, yytext()); }
 
+    /* Identificadores e números */
     {OversizedIdentifier} {
         throw new RuntimeException("Erro Léxico: Identificador gigante -> " + yytext());
     }
 
-    {Number} { return symbol(sym.NUMBER, yytext()); }
     {Identifier} { return symbol(sym.ID, yytext()); }
+    {Number}     { return symbol(sym.NUMBER, yytext()); }
 
+    /* Qualquer outro caractere */
     . {
-        throw new RuntimeException("Erro Léxico: Caractere ilegal -> " + yytext());
+        throw new RuntimeException("Erro Léxico: Caractere Ilegal -> " + yytext());
     }
 }
 
-<<EOF>> {
-    return new Symbol(sym.EOF);
-}
+<<EOF>> { return symbol(sym.EOF, ""); }
