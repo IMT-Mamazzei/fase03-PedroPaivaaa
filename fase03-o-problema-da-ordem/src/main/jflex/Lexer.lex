@@ -1,107 +1,97 @@
 package br.maua.cic303;
 
-import java_cup.runtime.Symbol;
-
 %%
 
 %class Lexer
 %public
 %unicode
-%cup
+%type Token
 %line
 %column
 
 %{
-
-    private Symbol symbol(int type) {
-        return new Symbol(type, yyline, yycolumn);
+    private Token token(Tag tag, String lexeme) {
+        return new Token(tag, lexeme);
     }
-
-    private Symbol symbol(int type, Object value) {
-        return new Symbol(type, yyline, yycolumn, value);
-    }
-
 %}
 
 /* ========================================================================= */
 /* MACROS                                                                    */
 /* ========================================================================= */
-
-LineTerminator = \r|\n|\r\n
-WhiteSpace = {LineTerminator} | [ \t\f]
-
-Letter = [a-zA-Z]
-Digit = [0-9]
+WhiteSpace = [ \t\r\n]+
 
 Number = [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
 
+Letter = [a-zA-Z]
+Digit  = [0-9]
 Identifier = {Letter}({Letter}|{Digit}|_){0,31}
-
-/* identificador com mais de 32 chars */
-OversizedIdentifier = {Letter}({Letter}|{Digit}|_){32,}
 
 %%
 
 <YYINITIAL> {
 
-    {WhiteSpace} { }
+    /* Ignorar espaços */
+    {WhiteSpace}    { }
 
-    /* palavras reservadas */
-    "if"        { return symbol(sym.IF); }
-    "then"      { return symbol(sym.THEN); }
-    "else"      { return symbol(sym.ELSE); }
-    "while"     { return symbol(sym.WHILE); }
+    /* ========================= */
+    /* PALAVRAS RESERVADAS       */
+    /* ========================= */
+    "if"        { return token(Tag.IF, yytext()); }
+    "then"      { return token(Tag.THEN, yytext()); }
+    "else"      { return token(Tag.ELSE, yytext()); }
+    "while"     { return token(Tag.WHILE, yytext()); }
 
-    /* pontuação */
-    "("         { return symbol(sym.LPAREN); }
-    ")"         { return symbol(sym.RPAREN); }
-    "{"         { return symbol(sym.LBRACE); }
-    "}"         { return symbol(sym.RBRACE); }
-    ";"         { return symbol(sym.SEMI); }
+    /* ========================= */
+    /* PONTUAÇÃO                */
+    /* ========================= */
+    "("         { return token(Tag.LPAREN, yytext()); }
+    ")"         { return token(Tag.RPAREN, yytext()); }
+    "{"         { return token(Tag.LBRACE, yytext()); }
+    "}"         { return token(Tag.RBRACE, yytext()); }
+    ";"         { return token(Tag.SEMI, yytext()); }
 
-    /* relacionais - ordem IMPORTA */
-    "=="        { return symbol(sym.REL_OP, yytext()); }
-    "!="        { return symbol(sym.REL_OP, yytext()); }
-    "<="        { return symbol(sym.REL_OP, yytext()); }
-    ">="        { return symbol(sym.REL_OP, yytext()); }
-    "<"         { return symbol(sym.REL_OP, yytext()); }
-    ">"         { return symbol(sym.REL_OP, yytext()); }
+    /* ========================= */
+    /* OPERADORES RELACIONAIS    */
+    /* ========================= */
+    "=="        { return token(Tag.REL_OP, yytext()); }
+    "!="        { return token(Tag.REL_OP, yytext()); }
+    "<="        { return token(Tag.REL_OP, yytext()); }
+    ">="        { return token(Tag.REL_OP, yytext()); }
+    "<"         { return token(Tag.REL_OP, yytext()); }
+    ">"         { return token(Tag.REL_OP, yytext()); }
 
-    /* atribuição */
-    "="         { return symbol(sym.ASSIGN); }
+    /* ========================= */
+    /* ATRIBUIÇÃO               */
+    /* ========================= */
+    "="         { return token(Tag.ASSIGN, yytext()); }
 
-    /* operadores matemáticos */
-    "+" | "-"   { return symbol(sym.ADD_OP, yytext()); }
+    /* ========================= */
+    /* OPERADORES MATEMÁTICOS   */
+    /* ========================= */
+    "+" | "-"       { return token(Tag.ADD_OP, yytext()); }
+    "*" | "/" | "%" { return token(Tag.MUL_OP, yytext()); }
 
-    "*" | "/" | "%" {
-        return symbol(sym.MUL_OP, yytext());
+    /* ========================= */
+    /* ERRO DE IDENTIFICADOR    */
+    /* ========================= */
+    {Letter}({Letter}|{Digit}|_){32} {
+        return token(Tag.ERROR,
+            "Erro Léxico: Identificador ultrapassou 32 caracteres -> " + yytext());
     }
 
-    /* identificadores */
-    {Identifier} {
-        return symbol(sym.ID, yytext());
-    }
+    /* ========================= */
+    /* NÚMEROS E IDS            */
+    /* ========================= */
+    {Number}        { return token(Tag.NUMBER, yytext()); }
+    {Identifier}    { return token(Tag.ID, yytext()); }
 
-    /* números */
-    {Number} {
-        return symbol(sym.NUMBER, yytext());
-    }
-
-    /* erro identificador gigante */
-    {OversizedIdentifier} {
-        throw new RuntimeException(
-            "Erro Léxico: Identificador gigante -> " + yytext()
-        );
-    }
-
-    /* erro genérico */
+    /* ========================= */
+    /* ERRO GERAL               */
+    /* ========================= */
     . {
-        throw new RuntimeException(
-            "Erro Léxico: Caractere Ilegal -> " + yytext()
-        );
+        return token(Tag.ERROR,
+            "Erro Léxico: Caractere Ilegal -> " + yytext());
     }
 }
 
-<<EOF>> {
-    return symbol(sym.EOF);
-}
+<<EOF>> { return token(Tag.EOF, ""); }
