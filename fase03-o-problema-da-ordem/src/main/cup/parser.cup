@@ -3,27 +3,25 @@ package br.maua.cic303;
 import java_cup.runtime.*;
 
 parser code {:
-    // Método chamado pelo CUP quando encontra um erro sintático
     public void syntax_error(Symbol cur_token) {
         throw new RuntimeException(
             "Erro Sintático na linha " + cur_token.left + ", coluna " + cur_token.right
         );
     }
-:}
+:};
 
-/* ========================================================================= */
-/* TERMINAIS                                                                 */
-/* ========================================================================= */
+/* ========================= */
+/* TERMINAIS                 */
+/* ========================= */
 
 terminal IF, THEN, ELSE, WHILE;
 terminal ASSIGN, LPAREN, RPAREN, LBRACE, RBRACE, SEMI;
-
 terminal String ID, NUMBER;
 terminal String ADD_OP, MUL_OP, REL_OP;
 
-/* ========================================================================= */
-/* NÃO TERMINAIS                                                             */
-/* ========================================================================= */
+/* ========================= */
+/* NÃO TERMINAIS             */
+/* ========================= */
 
 non terminal program;
 non terminal stmt_list;
@@ -39,21 +37,19 @@ non terminal expr;
 non terminal rel_expr;
 non terminal add_expr;
 non terminal mul_expr;
-non terminal unary_expr;
 non terminal factor;
 
-/* ========================================================================= */
-/* PRECEDÊNCIA                                                               */
-/* ========================================================================= */
-/* menor -> maior */
+/* ========================= */
+/* PRECEDÊNCIA               */
+/* ========================= */
+
 precedence nonassoc REL_OP;
 precedence left ADD_OP;
 precedence left MUL_OP;
-precedence right UMINUS;
 
-/* ========================================================================= */
-/* GRAMÁTICA                                                                 */
-/* ========================================================================= */
+/* ========================= */
+/* GRAMÁTICA                 */
+/* ========================= */
 
 start with program;
 
@@ -87,33 +83,21 @@ block_stmt ::= LBRACE stmt_list RBRACE
 null_stmt ::= SEMI
             ;
 
-/* EXPRESSÕES */
-
-/* expressão completa */
 expr ::= rel_expr
        ;
 
-/* relação: ==, !=, <, >, <=, >= */
 rel_expr ::= rel_expr REL_OP add_expr
            | add_expr
            ;
 
-/* soma/subtração */
 add_expr ::= add_expr ADD_OP mul_expr
            | mul_expr
            ;
 
-/* multiplicação/divisão/módulo */
-mul_expr ::= mul_expr MUL_OP unary_expr
-           | unary_expr
+mul_expr ::= mul_expr MUL_OP factor
+           | factor
            ;
 
-/* opcionalmente aceita sinal unário */
-unary_expr ::= ADD_OP unary_expr %prec UMINUS
-             | factor
-             ;
-
-/* fatores básicos */
 factor ::= NUMBER
          | ID
          | LPAREN expr RPAREN
