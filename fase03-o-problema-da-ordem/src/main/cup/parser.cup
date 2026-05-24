@@ -10,46 +10,28 @@ parser code {:
     }
 :};
 
-/* ========================= */
-/* TERMINAIS                 */
-/* ========================= */
-
 terminal IF, THEN, ELSE, WHILE;
 terminal ASSIGN, LPAREN, RPAREN, LBRACE, RBRACE, SEMI;
 terminal String ID, NUMBER;
 terminal String ADD_OP, MUL_OP, REL_OP;
 
-/* ========================= */
-/* NÃO TERMINAIS             */
-/* ========================= */
-
 non terminal program;
 non terminal stmt_list;
 non terminal stmt;
-
 non terminal assign_stmt;
 non terminal if_stmt;
 non terminal while_stmt;
 non terminal block_stmt;
 non terminal null_stmt;
-
 non terminal expr;
 non terminal rel_expr;
 non terminal add_expr;
 non terminal mul_expr;
 non terminal factor;
 
-/* ========================= */
-/* PRECEDÊNCIA               */
-/* ========================= */
-
 precedence nonassoc REL_OP;
 precedence left ADD_OP;
 precedence left MUL_OP;
-
-/* ========================= */
-/* GRAMÁTICA                 */
-/* ========================= */
 
 start with program;
 
@@ -57,6 +39,7 @@ program ::= stmt_list
           ;
 
 stmt_list ::= stmt_list stmt
+            | stmt
             | /* vazio */
             ;
 
