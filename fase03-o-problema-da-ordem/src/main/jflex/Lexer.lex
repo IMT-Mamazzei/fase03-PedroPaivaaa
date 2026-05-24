@@ -3,6 +3,7 @@ package br.maua.cic303;
 import java_cup.runtime.Symbol;
 
 %%
+
 %class Lexer
 %public
 %unicode
@@ -11,65 +12,107 @@ import java_cup.runtime.Symbol;
 %column
 
 %{
-    private Symbol symbol(int type) {
-        return new Symbol(type, yyline, yycolumn);
-    }
 
-    private Symbol symbol(int type, Object value) {
-        return new Symbol(type, yyline, yycolumn, value);
-    }
+private Symbol symbol(int type) {
+    return new Symbol(type, yyline, yycolumn);
+}
+
+private Symbol symbol(int type, Object value) {
+    return new Symbol(type, yyline, yycolumn, value);
+}
+
 %}
 
-/* ========================================================================= */
 /* MACROS */
-/* ========================================================================= */
+
 LineTerminator = \r|\n|\r\n
 WhiteSpace = {LineTerminator}|[ \t\f]
 
-Number = [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
 Letter = [a-zA-Z]
 Digit = [0-9]
 
 Identifier = {Letter}({Letter}|{Digit}|_)*
-OversizedIdentifier = {Letter}({Letter}|{Digit}|_){32,}
+
+Number = [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?
 
 %%
+
 <YYINITIAL> {
-    {WhiteSpace} { /* ignora */ }
 
-    /* Palavras reservadas */
-    "if"    { return symbol(sym.IF); }
-    "then"  { return symbol(sym.THEN); }
-    "else"  { return symbol(sym.ELSE); }
-    "while" { return symbol(sym.WHILE); }
+{WhiteSpace} { }
 
-    /* Operadores relacionais e atribuição */
-    "==" | "!=" | "<=" | ">=" | "<" | ">" { return symbol(sym.REL_OP, yytext()); }
-    "=" { return symbol(sym.ASSIGN); }
+/* PALAVRAS RESERVADAS */
 
-    /* Pontuação */
-    "(" { return symbol(sym.LPAREN); }
-    ")" { return symbol(sym.RPAREN); }
-    "{" { return symbol(sym.LBRACE); }
-    "}" { return symbol(sym.RBRACE); }
-    ";" { return symbol(sym.SEMI); }
+"if" { return symbol(sym.IF); }
 
-    /* Operadores matemáticos */
-    "+" | "-" { return symbol(sym.ADD_OP, yytext()); }
-    "*" | "/" | "%" { return symbol(sym.MUL_OP, yytext()); }
+"then" { return symbol(sym.THEN); }
 
-    /* Identificadores e números */
-    {OversizedIdentifier} {
-        throw new RuntimeException("Erro Léxico: Identificador gigante -> " + yytext());
-    }
+"else" { return symbol(sym.ELSE); }
 
-    {Identifier} { return symbol(sym.ID, yytext()); }
-    {Number}     { return symbol(sym.NUMBER, yytext()); }
+"while" { return symbol(sym.WHILE); }
 
-    /* Qualquer outro caractere */
-    . {
-        throw new RuntimeException("Erro Léxico: Caractere Ilegal -> " + yytext());
-    }
+/* PONTUAÇÃO */
+
+"(" { return symbol(sym.LPAREN); }
+
+")" { return symbol(sym.RPAREN); }
+
+"{" { return symbol(sym.LBRACE); }
+
+"}" { return symbol(sym.RBRACE); }
+
+";" { return symbol(sym.SEMI); }
+
+/* OPERADORES RELACIONAIS */
+
+"==" { return symbol(sym.REL_OP, yytext()); }
+
+"!=" { return symbol(sym.REL_OP, yytext()); }
+
+"<=" { return symbol(sym.REL_OP, yytext()); }
+
+">=" { return symbol(sym.REL_OP, yytext()); }
+
+"<" { return symbol(sym.REL_OP, yytext()); }
+
+">" { return symbol(sym.REL_OP, yytext()); }
+
+/* ATRIBUIÇÃO */
+
+"=" { return symbol(sym.ASSIGN); }
+
+/* OPERADORES MATEMÁTICOS */
+
+"+" { return symbol(sym.ADD_OP, yytext()); }
+
+"-" { return symbol(sym.ADD_OP, yytext()); }
+
+"*" { return symbol(sym.MUL_OP, yytext()); }
+
+"/" { return symbol(sym.MUL_OP, yytext()); }
+
+"%" { return symbol(sym.MUL_OP, yytext()); }
+
+/* TOKENS */
+
+{Identifier} {
+    return symbol(sym.ID, yytext());
 }
 
-<<EOF>> { return symbol(sym.EOF, ""); }
+{Number} {
+    return symbol(sym.NUMBER, yytext());
+}
+
+/* ERRO */
+
+. {
+    throw new RuntimeException(
+        "Erro Léxico: Caractere ilegal -> " + yytext()
+    );
+}
+
+}
+
+<<EOF>> {
+    return symbol(sym.EOF);
+}

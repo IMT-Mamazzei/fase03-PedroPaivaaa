@@ -3,54 +3,55 @@ package br.maua.cic303;
 import java_cup.runtime.*;
 
 parser code {:
-    // Método chamado pelo CUP quando encontra um erro sintático
     public void syntax_error(Symbol cur_token) {
-        if (cur_token == null) {
-            throw new RuntimeException("Erro Sintático no fim do arquivo");
-        }
         throw new RuntimeException(
-            "Erro Sintático na linha " + cur_token.left + ", coluna " + cur_token.right
+            "Erro Sintático na linha " +
+            cur_token.left +
+            ", coluna " +
+            cur_token.right
         );
     }
-:}
+:};
 
-/* ========================================================================= */
-/* DECLARAÇÃO DOS TOKENS (TERMINAIS) */
-/* ========================================================================= */
+/* TERMINAIS */
 terminal IF, THEN, ELSE, WHILE;
 terminal ASSIGN, LPAREN, RPAREN, LBRACE, RBRACE, SEMI;
-terminal String ID, NUMBER;
-terminal String ADD_OP, MUL_OP, REL_OP;
 
-/* Terminal auxiliar só para resolver o dangling else */
-terminal LOWER_THAN_ELSE;
+terminal String ID;
+terminal String NUMBER;
 
-/* ========================================================================= */
-/* DECLARAÇÃO DOS NÃO-TERMINAIS */
-/* ========================================================================= */
-non terminal program, stmt_list, stmt;
-non terminal assign_stmt, if_stmt, while_stmt, block_stmt, null_stmt;
+terminal String ADD_OP;
+terminal String MUL_OP;
+terminal String REL_OP;
+
+/* NÃO TERMINAIS */
+non terminal program;
+non terminal stmt_list;
+non terminal stmt;
+
+non terminal assign_stmt;
+non terminal if_stmt;
+non terminal while_stmt;
+non terminal block_stmt;
+non terminal null_stmt;
+
 non terminal expr;
 
-/* ========================================================================= */
-/* PRECEDÊNCIA E ASSOCIATIVIDADE */
-/* ========================================================================= */
-precedence nonassoc LOWER_THAN_ELSE;
-precedence nonassoc ELSE;
+/* PRECEDÊNCIA */
 precedence left REL_OP;
 precedence left ADD_OP;
 precedence left MUL_OP;
 
-/* ========================================================================= */
-/* REGRAS DA GRAMÁTICA */
-/* ========================================================================= */
+/* INÍCIO */
 start with program;
+
+/* GRAMÁTICA */
 
 program ::= stmt_list ;
 
 stmt_list ::= stmt_list stmt
-           | /* empty */
-           ;
+            | stmt
+            ;
 
 stmt ::= assign_stmt
        | if_stmt
@@ -61,13 +62,15 @@ stmt ::= assign_stmt
 
 assign_stmt ::= ID ASSIGN expr SEMI ;
 
-if_stmt ::= IF LPAREN expr RPAREN THEN block_stmt %prec LOWER_THAN_ELSE
+if_stmt ::= IF LPAREN expr RPAREN THEN block_stmt
           | IF LPAREN expr RPAREN THEN block_stmt ELSE block_stmt
           ;
 
 while_stmt ::= WHILE LPAREN expr RPAREN block_stmt ;
 
-block_stmt ::= LBRACE stmt_list RBRACE ;
+block_stmt ::= LBRACE stmt_list RBRACE
+             | LBRACE RBRACE
+             ;
 
 null_stmt ::= SEMI ;
 
